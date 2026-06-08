@@ -1,98 +1,62 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router'
+import { useAuth } from '@/lib/AuthContext'
+import { View, StyleSheet, Image, ActivityIndicator } from 'react-native'
+import { useEffect } from 'react'
+import { Colors } from '@/constants/colors'
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+function SplashScreen() {
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+    <View style={styles.splash}>
+      <View style={[styles.blob, { top: -100, left: -80, backgroundColor: 'rgba(37,99,235,0.2)' }]} />
+      <View style={[styles.blob, { bottom: -100, right: -60, backgroundColor: 'rgba(8,145,178,0.15)', width: 300, height: 300 }]} />
+      
+      <Image
+        source={require('../../assets/images/logo-small.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <ActivityIndicator color="#fff" style={{ marginTop: 40 }} />
+    </View>
+  )
 }
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+export default function Index() {
+  const { token, user, initialized } = useAuth()
+  const router = useRouter()
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+  useEffect(() => {
+    if (!initialized) return
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+    const timer = setTimeout(() => {
+      if (!token || !user) {
+        router.replace('/login')
+      } else {
+        router.replace('/dashboard/user')
+      }
+    }, 1000)
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
+    return () => clearTimeout(timer)
+  }, [initialized, token, user, router])
+
+  return <SplashScreen />
 }
 
 const styles = StyleSheet.create({
-  container: {
+  splash: {
     flex: 1,
     justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    backgroundColor: Colors.bg,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  blob: {
+    position: 'absolute',
+    width: 350,
+    height: 350,
+    borderRadius: 175,
   },
-  title: {
-    textAlign: 'center',
+  logo: {
+    width: 120,
+    height: 120,
+    borderRadius: 32,
   },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
+})
